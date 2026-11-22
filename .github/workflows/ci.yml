@@ -1,0 +1,82 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: "**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CI: 1
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings -W unreachable-pub -W rust-2024-compatibility"
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - &checkout_depth_1
+        name: checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - &install_rust
+        name: rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - &cache
+        name: cache
+        uses: Swatinem/rust-cache@v2
+      - name: build
+        run: cargo build --locked --all-targets --all-features
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout_depth_1
+      - *install_rust
+      - *cache
+      - name: test
+        run: cargo test --locked --all-features
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout_depth_1
+      - name: rust toolchain - with rustfmt
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - *cache
+      - name: format
+        run: cargo fmt --all -- --check
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout_depth_1
+      - name: rust toolchain - with clippy
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - *cache
+      - name: clippy
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+  conventional-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: verify conventional commits
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check

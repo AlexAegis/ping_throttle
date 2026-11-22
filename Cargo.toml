@@ -1,0 +1,17 @@
+[package]
+name = "ping_throttle"
+version = "0.1.0"
+edition = "2024"
+description = "Collects events and notifies subscribers at a cadence"
+repository = "https://github.com/AlexAegis/ping_throttle"
+authors = ["Sandor Gyori <alexaegis@pm.me>"]
+license = "MIT"
+readme = "readme.md"
+publish = false
+
+[lints.rust]
+unsafe_code = "forbid"
+unreachable_pub = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
