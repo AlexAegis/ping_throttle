@@ -75,3 +75,25 @@ fn should_show_the_count_of_its_subscribers_in_debug_text() {
 	notifier.subscribe(|_| {});
 	assert!(format!("{notifier:?}").contains("subscriber_count: 1"));
 }
+
+#[test]
+fn should_not_ping_for_a_new_cadence_alone() {
+	let start = Instant::now();
+	let pings = Arc::new(Mutex::new(Vec::new()));
+	let mut notifier = Notifier::new(CADENCE);
+	let seen = Arc::clone(&pings);
+	notifier.subscribe(move |ping| seen.lock().unwrap().push(ping.keys.clone()));
+	notifier.arrive("a", start);
+	notifier.poll(start);
+	notifier.arrive("b", start + seconds(5));
+	notifier.set_cadence(Cadence {
+		quiet_time: seconds(120),
+		batch_size: 8,
+		longest_wait: seconds(600),
+	});
+	assert_eq!(
+		notifier.poll(start + seconds(6)),
+		Some(start + seconds(605))
+	);
+	assert_eq!(*pings.lock().unwrap(), vec![vec!["a"]]);
+}

@@ -33,6 +33,11 @@ impl<K: PartialEq> Notifier<K> {
 		self.subscribers.push(Box::new(subscriber));
 	}
 
+	/// Replaces the cadence, as [`Throttle::set_cadence`] describes.
+	pub fn set_cadence(&mut self, cadence: Cadence) {
+		self.throttle.set_cadence(cadence);
+	}
+
 	pub fn arrive(&mut self, key: K, now: Instant) {
 		self.throttle.arrive(key, now);
 	}

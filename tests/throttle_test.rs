@@ -260,3 +260,44 @@ fn should_never_be_due_for_an_event_of_the_quiet_time_with_both_rules_off() {
 	throttle.leave(&"b");
 	assert_eq!(throttle.due(), Some(start + seconds(1000)));
 }
+
+#[test]
+fn should_keep_the_quiet_time_and_the_waiting_events_at_a_new_cadence() {
+	let start = Instant::now();
+	let mut throttle = pinged_throttle(start);
+	throttle.arrive("b", start + seconds(10));
+	throttle.arrive("c", start + seconds(12));
+	throttle.arrive("d", start + seconds(14));
+	throttle.set_cadence(Cadence {
+		quiet_time: seconds(120),
+		batch_size: 8,
+		longest_wait: seconds(600),
+	});
+	assert_eq!(throttle.due(), Some(start + seconds(610)));
+	assert_eq!(throttle.take_ping(start + seconds(15)), None);
+	throttle.set_cadence(Cadence {
+		quiet_time: seconds(20),
+		batch_size: 3,
+		longest_wait: seconds(600),
+	});
+	assert_eq!(throttle.due(), Some(start + seconds(20)));
+	throttle.set_cadence(Cadence {
+		quiet_time: seconds(11),
+		batch_size: 3,
+		longest_wait: seconds(600),
+	});
+	assert_eq!(throttle.due(), Some(start + seconds(14)));
+	throttle.set_cadence(Cadence {
+		quiet_time: seconds(5),
+		batch_size: 2,
+		longest_wait: seconds(600),
+	});
+	assert_eq!(throttle.due(), Some(start + seconds(10)));
+	assert_eq!(
+		throttle.take_ping(start + seconds(15)),
+		Some(Ping {
+			keys: vec!["b", "c", "d"],
+			at: start + seconds(15)
+		})
+	);
+}

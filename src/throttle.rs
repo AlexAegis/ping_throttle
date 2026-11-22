@@ -30,6 +30,13 @@ impl<K: PartialEq> Throttle<K> {
 		}
 	}
 
+	/// Replaces the cadence. The waiting events keep their arrival times and
+	/// the quiet time keeps its start. [`Throttle::due`] then counts the new
+	/// cadence from the last ping.
+	pub fn set_cadence(&mut self, cadence: Cadence) {
+		self.cadence = cadence;
+	}
+
 	/// Adds an event that waits for a ping. An event that waits already keeps
 	/// its arrival time.
 	pub fn arrive(&mut self, key: K, now: Instant) {

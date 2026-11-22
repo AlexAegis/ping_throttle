@@ -64,5 +64,10 @@ assert_eq!(next_poll, Some(start + Duration::from_secs(125)));
 - `Throttle`: the same cadence without subscribers. `due` returns the time
   from which a ping is due. `take_ping` returns the ping when it is due.
 
+`Notifier::set_cadence` and `Throttle::set_cadence` replace the cadence. The
+waiting events keep their arrival times and the quiet time keeps its start. The
+new cadence counts from the last ping. Call `poll` after `set_cadence` too: the
+time of the next ping can move.
+
 An event is a key of the caller's type, such as an ID. A key that arrives again
 while it waits keeps its first arrival time.
